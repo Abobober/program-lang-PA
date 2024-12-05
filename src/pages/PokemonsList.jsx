@@ -1,39 +1,37 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import "../styles/pokemonsList.css";
+import React, { useState, useEffect } from "react"
+import { Link } from "react-router-dom"
+import "../styles/pokemonsList.css"
+import { getPokemonList, getPokemonDetails } from "../ApiClient.js"
 
 const PokemonList = () => {
-  const [pokemons, setPokemons] = useState([]);
-  const [pokemonImages, setPokemonImages] = useState({});
+  const [pokemons, setPokemons] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch("https://pokeapi.co/api/v2/pokemon?limit=151")
-      .then((response) => response.json())
-      .then((data) => {
-        setPokemons(data.results);
-        data.results.forEach((pokemon, index) => {
-          fetch(`https://pokeapi.co/api/v2/pokemon/${index + 1}`)
-            .then((response) => response.json())
-            .then((data) => {
-              setPokemonImages((prevImages) => ({
-                ...prevImages,
-                [index + 1]: data.sprites.front_default,
-              }));
-            });
-        });
-      })
-      .catch((error) => console.error("Error fetching Pokémon:", error));
-  }, []);
+    setLoading(true)
+
+    getPokemonList()
+      .then((results) =>
+        Promise.all(
+          results.map((_, index) => getPokemonDetails(index + 1))
+        )
+      )
+      .then(setPokemons)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [])
+
+  if (loading) return <p>Loading Pokémon list...</p>
 
   return (
     <div className="container">
       <h2>Pokémon List</h2>
       <div className="pokemon-grid">
-        {pokemons.map((pokemon, index) => (
-          <div key={index} className="pokemon-card">
-            <Link to={`/pokemon/${index + 1}`}>
+        {pokemons.map((pokemon) => (
+          <div key={pokemon.id} className="pokemon-card">
+            <Link to={`/pokemon/${pokemon.id}`}>
               <img
-                src={pokemonImages[index + 1]}
+                src={pokemon.sprites.front_default}
                 alt={pokemon.name}
                 className="pokemon-image"
               />
@@ -43,7 +41,7 @@ const PokemonList = () => {
         ))}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default PokemonList;
+export default PokemonList

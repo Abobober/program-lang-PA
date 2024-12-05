@@ -1,21 +1,23 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import "../styles/pokemonPage.css";
+import React, { useState, useEffect } from "react"
+import { useParams } from "react-router-dom"
+import "../styles/pokemonPage.css"
+import { getPokemonDetails } from "../ApiClient.js"
 
 const PokemonPage = () => {
-  const { id } = useParams();
-  const [pokemon, setPokemon] = useState(null);
+  const { id } = useParams()
+  const [pokemon, setPokemon] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`https://pokeapi.co/api/v2/pokemon/${id}`)
-      .then((response) => response.json())
-      .then((data) => setPokemon(data))
-      .catch((error) => console.error("Error fetching Pokémon details:", error));
-  }, [id]);
+    setLoading(true)
+    getPokemonDetails(id)
+      .then(setPokemon)
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [id])
 
-  if (!pokemon) {
-    return <p>Loading Pokémon...</p>;
-  }
+  if (loading) return <p>Loading Pokémon...</p>
+  if (!pokemon) return <p>Error loading Pokémon.</p>
 
   return (
     <div className="pokemon-detail">
@@ -29,7 +31,7 @@ const PokemonPage = () => {
         <p><strong>Abilities:</strong> {pokemon.abilities.map((ability) => ability.ability.name).join(", ")}</p>
       </div>
     </div>
-  );
-};
+  )
+}
 
 export default PokemonPage;
